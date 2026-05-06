@@ -83,3 +83,6 @@ ignore = ["E501"]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 addopts = "-ra"
+markers = [
+    "slow: tests that load the pretrained .pt checkpoint or do other heavy IO",
+]
