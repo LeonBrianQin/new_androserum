@@ -1,0 +1,85 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "androserum"
+version = "0.1.0"
+description = "Android method-level semantic clustering with DexBERT + FCG + self-supervised GNN"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+authors = [
+    { name = "LeonBrianQin" },
+]
+keywords = ["android", "smali", "dexbert", "clustering", "gnn", "contrastive-learning"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+# Core dependencies (Phase 0-5 + 7).
+# DO NOT add tensorflow here — keeping the project TF-free is a deliberate
+# decision (see PROJECT_HANDOFF.md decision #10).
+dependencies = [
+    "torch>=2.0",
+    "numpy",
+    "pandas",
+    "pyarrow",
+    "tqdm",
+    "requests",
+    "fire",
+    "scikit-learn",
+    "umap-learn",
+    "hdbscan",
+    "androguard>=4.0",
+    "networkx",
+    "matplotlib",
+    "pyyaml",
+    "pydantic",
+    "tensorboardX",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7",
+    "pytest-cov",
+    "ruff",
+    "mypy",
+    "ipykernel",
+]
+# Phase 6 dependencies — install separately after pinning the torch version.
+# Example:
+#   pip install torch-geometric torch-scatter torch-sparse \
+#       -f https://data.pyg.org/whl/torch-${TORCH}.html
+gnn = [
+    # "torch-geometric>=2.5",
+    # "torch-scatter",
+    # "torch-sparse",
+]
+
+[project.urls]
+Homepage = "https://github.com/LeonBrianQin/new_androserum"
+Repository = "https://github.com/LeonBrianQin/new_androserum.git"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-ra"

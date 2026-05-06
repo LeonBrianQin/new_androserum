@@ -1,0 +1,63 @@
+# ============================================================
+# Large files / model weights / data (NEVER commit)
+# ============================================================
+# Leading slash = "only match at project root" so we don't
+# accidentally ignore src/androserum/data/ (the Python package)
+# or any future src/.../assets/ subpackage.
+/assets/
+/data/
+
+# File-level safety net (in case a path slips through)
+*.pt
+*.pth
+*.apk
+*.parquet
+*.npy
+*.gpickle
+
+# ============================================================
+# Python build / cache
+# ============================================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# ============================================================
+# Test / static-check caches
+# ============================================================
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# ============================================================
+# Virtual environments
+# ============================================================
+.venv/
+venv/
+.env
+.env.local
+
+# ============================================================
+# IDE / Editor
+# ============================================================
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ============================================================
+# Jupyter
+# ============================================================
+.ipynb_checkpoints/
+
+# ============================================================
+# OS
+# ============================================================
+.DS_Store
+Thumbs.db
