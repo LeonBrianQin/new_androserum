@@ -23,15 +23,24 @@ import shutil
 import subprocess
 import sys
 import time
+from pathlib import Path
 from typing import List
 
-REPO_ROOT = osp.dirname(osp.abspath(__file__))
-DATA_DIR = osp.join(REPO_ROOT, "Data")
-sys.path.insert(0, DATA_DIR)
+from androserum.data.instruction_generator import SmaliInstructionGenerator
 
-from instruction_generator import SmaliInstructionGenerator  # noqa: E402
 
-BAKSMALI_JAR = osp.join(DATA_DIR, "baksmali-2.5.2.jar")
+def _project_root() -> Path:
+    """Walk up from this file to the nearest ``pyproject.toml`` (project root)."""
+    here = Path(__file__).resolve()
+    for parent in here.parents:
+        if (parent / "pyproject.toml").exists():
+            return parent
+    raise RuntimeError(
+        f"could not locate project root (no pyproject.toml found above {here})"
+    )
+
+
+BAKSMALI_JAR = str(_project_root() / "assets" / "baksmali-2.5.2.jar")
 
 
 def disassemble(apk_path: str, smali_out_dir: str) -> None:
