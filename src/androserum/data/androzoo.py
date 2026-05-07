@@ -14,9 +14,14 @@ AndroZoo 下载脚本 - 直接通过 sha256 列表下载 APK。
 3) 从文本文件读入 (一行一个 sha, '#' 开头视为注释):
        python androzoo_download_by_sha.py --sha_file my_shas.txt
 
-API Key:
-    优先级 --apikey > 环境变量 ANDROZOO_APIKEY。 不要把 key 写进源码。
-    申请地址: https://androzoo.uni.lu/access
+API Key（优先级从高到低）:
+    1) 命令行 --apikey
+    2) 环境变量 ANDROZOO_APIKEY (推荐：写到本地 .env.local 然后 ``source`` 之)
+
+申请地址: https://androzoo.uni.lu/access
+
+注意：绝对不要把 key 硬编码到本文件中，本仓库历史曾出现过这种情况，
+请勿再犯；公开仓库一旦泄露 key 就只能去 AndroZoo 申请重发。
 """
 
 import argparse
@@ -158,7 +163,11 @@ def main() -> None:
     ap.add_argument("--sha", nargs="*", default=None, help="一个或多个 sha256 (空格分隔)")
     ap.add_argument("--sha_file", default=None, help="纯文本文件, 一行一个 sha256")
     ap.add_argument("--out_dir", default="downloaded_samples", help="输出目录")
-    ap.add_argument("--apikey",  default="9ba98b64abb3ef608ebfce6a383e5ea8c2b8165b83ea2aae827de2cd07393d67", help="AndroZoo apikey, 优先级高于环境变量")
+    ap.add_argument(
+        "--apikey",
+        default=None,
+        help="AndroZoo apikey；不传则读环境变量 ANDROZOO_APIKEY",
+    )
     ap.add_argument("--workers", type=int, default=4, help="并发线程数, 不建议过高")
     ap.add_argument("--timeout", type=int, default=120, help="单次请求超时秒")
     ap.add_argument("--retries", type=int, default=3, help="单个样本重试次数")
@@ -169,10 +178,14 @@ def main() -> None:
     )
     args = ap.parse_args()
 
-    apikey = args.apikey or os.environ.get("ANDROZOO_APIKEY", "")
+    apikey = (
+        (args.apikey or "").strip()
+        or os.environ.get("ANDROZOO_APIKEY", "").strip()
+    )
     if not apikey:
         sys.exit(
-            "[ERR] 缺少 apikey. 用 --apikey 传入, 或 export ANDROZOO_APIKEY=..."
+            "[ERR] missing AndroZoo apikey: pass --apikey or "
+            "set ANDROZOO_APIKEY (e.g. `source .env.local`)."
         )
 
     sha_list = load_sha_list(args)
