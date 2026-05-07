@@ -124,6 +124,47 @@ Estimated wall-clock for the 200-APK dev set on a single RTX 4090
 (24 GB): ~1.5 h end-to-end (Phase 0–3). Reference: ~5 h on a laptop
 RTX 4060 (8 GB).
 
+### Cheapest Cloud Path: Phase 4 Only
+
+If your local machine has already finished Phase 0–3, the cheapest cloud
+workflow is to upload only the assets plus `data/methods/`, run Phase 4 on the
+GPU box, then pull back the checkpoint + finetuned embeddings.
+
+Current local snapshot sizes:
+
+- `assets/` ≈ 1.8 GB
+- `data/methods/` ≈ 170 MB
+
+That is enough for Phase 4; you do **not** need to upload:
+
+- `data/apks/`
+- `data/processed/`
+- `data/embeddings/baseline/`
+
+Minimal workflow:
+
+```bash
+# 1. local: push code
+git push origin main
+
+# 2. remote: clone + bootstrap once
+git clone https://github.com/LeonBrianQin/new_androserum.git
+cd new_androserum
+bash scripts/cloud_setup.sh
+
+# 3. local: upload only Phase 4 inputs
+bash scripts/cloud_phase4_push.sh <user@host> /path/to/new_androserum
+
+# 4. remote: run the recommended Phase 4 config and export embeddings
+bash scripts/cloud_phase4_run.sh p4_dev200_run1
+
+# 5. local: pull the outputs back and shut the server down
+bash scripts/cloud_phase4_pull.sh <user@host> /path/to/new_androserum p4_dev200_run1
+```
+
+This is currently the most cost-effective way to use a rented GPU for this
+project.
+
 ## License
 
 Apache-2.0 — see [LICENSE](LICENSE).
