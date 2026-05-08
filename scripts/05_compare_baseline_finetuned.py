@@ -87,6 +87,7 @@ class CompareConfig:
     out_dir: str = "data/reports"
     sample_size: int = 50000
     seed: int = 13
+    output_stem: str | None = None
     min_cluster_size: int = 50
     min_samples: int = 5
     umap_n_neighbors: int = 30
@@ -261,7 +262,10 @@ def run(cfg: CompareConfig) -> dict:
 
     out_root = Path(cfg.out_dir)
     out_root.mkdir(parents=True, exist_ok=True)
-    stem = f"baseline_vs_finetuned_dev200_{baseline.shape[0]//1000}k"
+    if cfg.output_stem:
+        stem = cfg.output_stem
+    else:
+        stem = f"baseline_vs_finetuned_dev200_{baseline.shape[0]//1000}k"
     plot_path = out_root / f"{stem}.png"
     json_path = out_root / f"{stem}.json"
 
