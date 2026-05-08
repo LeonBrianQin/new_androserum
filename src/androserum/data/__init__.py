@@ -7,21 +7,31 @@ from androserum.data.method_extractor import (
     slash_class_to_descriptor,
 )
 from androserum.data.method_parquet import read_methods_parquet, write_methods_parquet
+from androserum.data.override_index import (
+    MethodOverrideRecord,
+    build_override_records_for_apk,
+    read_override_parquet,
+    write_override_parquet,
+)
 from androserum.data.schema import MethodRecord, make_full_id
 from androserum.data.susi_index import SusiIndex, build_susi_index, dalvik_api_from_soot_line
 from androserum.data.susi_tagger import tag_method_susi
 
 __all__ = [
     "MethodRecord",
+    "MethodOverrideRecord",
     "SusiIndex",
+    "build_override_records_for_apk",
     "build_susi_index",
     "dalvik_api_from_soot_line",
     "extract_api_calls_from_instructions",
     "extract_methods",
     "is_trivial_filtered",
     "make_full_id",
+    "read_override_parquet",
     "read_methods_parquet",
     "slash_class_to_descriptor",
     "tag_method_susi",
+    "write_override_parquet",
     "write_methods_parquet",
 ]

@@ -10,7 +10,8 @@
 #
 # What it syncs:
 #   * assets/        (DexBERT ckpt + vocab + baksmali)
-#   * data/methods/  (Phase 2/2b output; enough to run Phase 4)
+#   * data/methods/  (Phase 2/2b output; enough to run Phase 4 A+B)
+#   * data/overrides/ (optional; needed for Phase 4 A+B+E)
 # -----------------------------------------------------------------------------
 
 set -euo pipefail
@@ -38,12 +39,17 @@ need "$REPO_ROOT/assets/baksmali-2.5.2.jar"
 need "$REPO_ROOT/data/methods"
 
 echo "[phase4-push] ensuring remote directories exist"
-ssh "$REMOTE" "mkdir -p '$REMOTE_REPO/assets' '$REMOTE_REPO/data/methods'"
+ssh "$REMOTE" "mkdir -p '$REMOTE_REPO/assets' '$REMOTE_REPO/data/methods' '$REMOTE_REPO/data/overrides'"
 
 echo "[phase4-push] syncing assets/ (~1.8 GB)"
 rsync -avzP "$REPO_ROOT/assets/" "$REMOTE:$REMOTE_REPO/assets/"
 
 echo "[phase4-push] syncing data/methods/ (~170 MB in current local snapshot)"
 rsync -avzP "$REPO_ROOT/data/methods/" "$REMOTE:$REMOTE_REPO/data/methods/"
+
+if [[ -d "$REPO_ROOT/data/overrides" ]]; then
+    echo "[phase4-push] syncing data/overrides/ (if present)"
+    rsync -avzP "$REPO_ROOT/data/overrides/" "$REMOTE:$REMOTE_REPO/data/overrides/"
+fi
 
 echo "[phase4-push] done"

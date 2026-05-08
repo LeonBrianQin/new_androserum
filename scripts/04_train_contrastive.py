@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Phase 4 — A+B contrastive fine-tuning on method-level DexBERT inputs.
+"""Phase 4 — A+B[+E] contrastive fine-tuning on method-level DexBERT inputs.
 
 Default behavior trains on the dev 200 SHA list and writes checkpoints to
 ``data/checkpoints``. Exporting finetuned per-APK embeddings is optional,
@@ -17,6 +17,9 @@ Examples::
 
     # train then immediately export finetuned CLS embeddings
     python scripts/04_train_contrastive.py --export_after_train=true
+
+    # enable signal E (same override target), assuming data/overrides/ exists
+    python scripts/04_train_contrastive.py --use_signal_e=true
 """
 
 from __future__ import annotations

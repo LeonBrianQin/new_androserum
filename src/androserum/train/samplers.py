@@ -7,7 +7,7 @@ import random
 
 from torch.utils.data import Sampler
 
-__all__ = ["SusiGroupBatchSampler"]
+__all__ = ["PositiveGroupBatchSampler", "SusiGroupBatchSampler"]
 
 
 def _sample_without_conflicts(
@@ -118,6 +118,86 @@ class SusiGroupBatchSampler(Sampler[list[int]]):
                 batch.extend(
                     _sample_without_conflicts(self.all_indices, remaining, rng, used)
                 )
+
+            rng.shuffle(batch)
+            yield batch[: self.batch_size]
+
+
+class PositiveGroupBatchSampler(Sampler[list[int]]):
+    """Batch sampler that can mix multiple positive-group sources.
+
+    Example sources:
+      * SuSi label groups (signal B)
+      * override-key groups (signal E)
+    """
+
+    def __init__(
+        self,
+        *,
+        all_indices: list[int],
+        group_maps: list[dict[str, list[int]]],
+        batch_size: int,
+        group_size: int = 2,
+        grouped_fraction: float = 0.5,
+        steps_per_epoch: int | None = None,
+        seed: int = 13,
+    ) -> None:
+        if batch_size < 2:
+            raise ValueError("batch_size must be at least 2")
+        if group_size < 2:
+            raise ValueError("group_size must be at least 2")
+        if not all_indices:
+            raise ValueError("all_indices must not be empty")
+
+        self.all_indices = list(all_indices)
+        self.group_maps = [
+            {k: list(v) for k, v in gm.items() if len(v) >= 2}
+            for gm in group_maps
+            if gm
+        ]
+        self.batch_size = batch_size
+        self.group_size = group_size
+        self.grouped_fraction = grouped_fraction
+        self.seed = seed
+        self.epoch = 0
+        self.steps_per_epoch = steps_per_epoch or max(1, math.ceil(len(all_indices) / batch_size))
+
+    def __len__(self) -> int:
+        return self.steps_per_epoch
+
+    def set_epoch(self, epoch: int) -> None:
+        self.epoch = epoch
+
+    def __iter__(self):
+        rng = random.Random(self.seed + self.epoch)
+        grouped_slots = int(self.batch_size * self.grouped_fraction)
+        grouped_slots = min(self.batch_size, max(0, grouped_slots))
+        grouped_slots = (grouped_slots // self.group_size) * self.group_size
+        n_groups = grouped_slots // self.group_size
+
+        for _ in range(self.steps_per_epoch):
+            batch: list[int] = []
+            used: set[int] = set()
+
+            for _group_idx in range(n_groups):
+                if not self.group_maps:
+                    break
+                group_map = rng.choice(self.group_maps)
+                if not group_map:
+                    continue
+                label = rng.choice(sorted(group_map))
+                batch.extend(
+                    _sample_without_conflicts(
+                        group_map[label],
+                        self.group_size,
+                        rng,
+                        used,
+                    )
+                )
+
+            remaining = self.batch_size - len(batch)
+            if remaining > 0:
+                batch.extend(_sample_without_conflicts(self.all_indices, remaining, rng, used))
 
             rng.shuffle(batch)
             yield batch[: self.batch_size]

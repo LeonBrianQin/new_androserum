@@ -22,8 +22,13 @@ from androserum.train.dataset import (
     load_sha_list,
     texts_to_model_inputs,
 )
-from androserum.train.losses import ab_contrastive_loss, count_b_positive_pairs
-from androserum.train.samplers import SusiGroupBatchSampler
+from androserum.train.losses import (
+    ab_contrastive_loss,
+    abe_contrastive_loss,
+    count_b_positive_pairs,
+    count_e_positive_pairs,
+)
+from androserum.train.samplers import PositiveGroupBatchSampler, SusiGroupBatchSampler
 
 __all__ = [
     "ContrastiveTrainConfig",
@@ -55,6 +60,8 @@ class ContrastiveTrainConfig:
     steps_per_epoch: int = 1000
     max_unlabeled_per_apk: int = 256
     unlabeled_keep_ratio: float = 0.05
+    overrides_dir: str | None = "data/overrides"
+    use_signal_e: bool = False
     num_workers: int = 0
     limit: int = 0
     seed: int = 13
@@ -173,6 +180,7 @@ def train_contrastive_ab(cfg: ContrastiveTrainConfig) -> dict[str, Any]:
         limit=cfg.limit,
         max_unlabeled_per_apk=cfg.max_unlabeled_per_apk,
         unlabeled_keep_ratio=cfg.unlabeled_keep_ratio,
+        overrides_dir=cfg.overrides_dir,
         seed=cfg.seed,
         show_progress=True,
     )
@@ -196,15 +204,29 @@ def train_contrastive_ab(cfg: ContrastiveTrainConfig) -> dict[str, Any]:
     print(f"[phase4] device: {dev}")
     print(f"[phase4] trainable params: {model.trainable_parameter_count():,}")
 
-    batch_sampler = SusiGroupBatchSampler(
-        all_indices=dataset.all_indices,
-        label_to_indices=dataset.usable_label_to_indices,
-        batch_size=cfg.batch_size,
-        label_group_size=cfg.label_group_size,
-        label_fraction=cfg.label_fraction,
-        steps_per_epoch=cfg.steps_per_epoch,
-        seed=cfg.seed,
-    )
+    if cfg.use_signal_e:
+        batch_sampler = PositiveGroupBatchSampler(
+            all_indices=dataset.all_indices,
+            group_maps=[
+                dataset.usable_label_to_indices,
+                dataset.usable_override_to_indices,
+            ],
+            batch_size=cfg.batch_size,
+            group_size=cfg.label_group_size,
+            grouped_fraction=cfg.label_fraction,
+            steps_per_epoch=cfg.steps_per_epoch,
+            seed=cfg.seed,
+        )
+    else:
+        batch_sampler = SusiGroupBatchSampler(
+            all_indices=dataset.all_indices,
+            label_to_indices=dataset.usable_label_to_indices,
+            batch_size=cfg.batch_size,
+            label_group_size=cfg.label_group_size,
+            label_fraction=cfg.label_fraction,
+            steps_per_epoch=cfg.steps_per_epoch,
+            seed=cfg.seed,
+        )
     loader = DataLoader(
         dataset,
         batch_sampler=batch_sampler,
@@ -241,12 +263,21 @@ def train_contrastive_ab(cfg: ContrastiveTrainConfig) -> dict[str, Any]:
             optimizer.zero_grad(set_to_none=True)
             _, proj1 = model(input_ids, seg_ids, mask)
             _, proj2 = model(input_ids, seg_ids, mask)
-            loss = ab_contrastive_loss(
-                proj1,
-                proj2,
-                batch.susi_labels,
-                temperature=cfg.temperature,
-            )
+            if cfg.use_signal_e:
+                loss = abe_contrastive_loss(
+                    proj1,
+                    proj2,
+                    batch.susi_labels,
+                    batch.override_keys,
+                    temperature=cfg.temperature,
+                )
+            else:
+                loss = ab_contrastive_loss(
+                    proj1,
+                    proj2,
+                    batch.susi_labels,
+                    temperature=cfg.temperature,
+                )
             loss.backward()
             if cfg.grad_clip_norm > 0:
                 torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=cfg.grad_clip_norm)
@@ -260,13 +291,15 @@ def train_contrastive_ab(cfg: ContrastiveTrainConfig) -> dict[str, Any]:
             if step == 1 or step % cfg.log_every == 0 or step == len(loader):
                 labeled = sum(label is not None for label in batch.susi_labels)
                 b_pairs = count_b_positive_pairs(batch.susi_labels)
+                e_pairs = count_e_positive_pairs(batch.override_keys) if cfg.use_signal_e else 0
                 print(
                     "[phase4] "
                     f"epoch={epoch}/{cfg.epochs} "
                     f"step={step}/{len(loader)} "
                     f"loss={batch_loss:.4f} "
                     f"labeled_in_batch={labeled}/{len(batch.susi_labels)} "
-                    f"b_pairs={b_pairs}"
+                    f"b_pairs={b_pairs} "
+                    f"e_pairs={e_pairs}"
                 )
 
         mean_loss = epoch_loss / max(1, epoch_batches)

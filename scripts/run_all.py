@@ -50,6 +50,7 @@ def main(
     apks_dir: str = "data/apks",
     processed_dir: str = "data/processed",
     methods_dir: str = "data/methods",
+    overrides_dir: str = "data/overrides",
     embeddings_dir: str = "data/embeddings/baseline",
     phase4_checkpoint_dir: str = "data/checkpoints",
     phase4_embeddings_dir: str = "data/embeddings/finetuned",
@@ -78,6 +79,8 @@ def main(
     phase4_log_every: int = 20,
     phase4_grad_clip_norm: float = 1.0,
     phase4_export_after_train: bool = False,
+    phase4_overrides_dir: str | None = "data/overrides",
+    phase4_use_signal_e: bool = False,
     phase4_cfg_path: str | None = None,
     phase4_weights_path: str | None = None,
     phase4_vocab_path: str | None = None,
@@ -85,6 +88,7 @@ def main(
     do_disassemble: bool = True,
     do_extract: bool = True,
     do_susi: bool = True,
+    do_overrides: bool = False,
     do_encode: bool = True,
     do_train: bool = False,
 ) -> None:
@@ -132,6 +136,15 @@ def main(
             limit=limit,
         )
 
+    if do_overrides:
+        print("\n[run_all] Phase 2c: APK/class hierarchy -> override sidecar parquet")
+        _load_phase_main("02c_extract_overrides.py")(
+            sha_file=sha_file,
+            apks_dir=apks_dir,
+            out_dir=overrides_dir,
+            limit=limit,
+        )
+
     if do_encode:
         print("\n[run_all] Phase 3: frozen-DexBERT encode -> embeddings/<SHA>.npz")
         _load_phase_main("03_encode_methods.py")(
@@ -164,6 +177,8 @@ def main(
             steps_per_epoch=phase4_steps_per_epoch,
             max_unlabeled_per_apk=phase4_max_unlabeled_per_apk,
             unlabeled_keep_ratio=phase4_unlabeled_keep_ratio,
+            overrides_dir=phase4_overrides_dir,
+            use_signal_e=phase4_use_signal_e,
             num_workers=phase4_num_workers,
             limit=phase4_limit if phase4_limit > 0 else limit,
             seed=phase4_seed,
