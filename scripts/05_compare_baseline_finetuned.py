@@ -84,6 +84,8 @@ class CompareConfig:
     methods_dir: str = "data/methods"
     baseline_dir: str = "data/embeddings/baseline"
     finetuned_dir: str = "data/embeddings/finetuned/p4_dev200_run1"
+    baseline_label: str = "Frozen DexBERT baseline"
+    finetuned_label: str = "Phase 4 finetuned"
     out_dir: str = "data/reports"
     sample_size: int = 50000
     seed: int = 13
@@ -225,11 +227,13 @@ def _plot_side_by_side(
     fin_pred: np.ndarray,
     out_png: Path,
     title_suffix: str,
+    baseline_label: str,
+    finetuned_label: str,
 ) -> None:
     fig, axes = plt.subplots(1, 2, figsize=(14, 6), dpi=150)
     datasets = [
-        (axes[0], base_xy, base_pred, "Frozen DexBERT baseline"),
-        (axes[1], fin_xy, fin_pred, "Phase 4 finetuned (A+B)"),
+        (axes[0], base_xy, base_pred, baseline_label),
+        (axes[1], fin_xy, fin_pred, finetuned_label),
     ]
 
     for ax, xy, pred, title in datasets:
@@ -276,6 +280,20 @@ def run(cfg: CompareConfig) -> dict:
         fin_pred,
         plot_path,
         title_suffix=f"n={baseline.shape[0]}",
+        baseline_label=cfg.baseline_label,
+        finetuned_label=cfg.finetuned_label,
+    )
+
+    requested_shas = set(load_sha_list(cfg.sha_file))
+    baseline_extra = sorted(
+        p.stem
+        for p in Path(cfg.baseline_dir).glob("*.npz")
+        if p.stem not in requested_shas
+    )
+    finetuned_extra = sorted(
+        p.stem
+        for p in Path(cfg.finetuned_dir).glob("*.npz")
+        if p.stem not in requested_shas
     )
 
     payload = {
@@ -287,7 +305,8 @@ def run(cfg: CompareConfig) -> dict:
         "finetuned": fin_metrics,
         "notes": {
             "alignment": "rows aligned by methods parquet order; full_id object arrays not required",
-            "baseline_extra_file_ignored": "0D64BB3C121E1986766505E182F16FB8DCC4188224F3094F99B9F905873DDC4A.npz",
+            "baseline_extra_files_ignored": baseline_extra,
+            "finetuned_extra_files_ignored": finetuned_extra,
         },
     }
     json_path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")

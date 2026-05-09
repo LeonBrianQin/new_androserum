@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""End-to-end pipeline runner: Phase 0 → 1 → 2 → 2b → 3 → 4.
+"""End-to-end pipeline runner: Phase 0 → 1 → 2 → 2b → 3 → 4 → 5.
 
 Calls each phase's ``main()`` in order. Every phase has its own
 ``skip_existing`` so re-runs are cheap; you can also start mid-pipeline by
@@ -53,6 +53,7 @@ def main(
     overrides_dir: str = "data/overrides",
     library_keys_dir: str = "data/library_keys",
     embeddings_dir: str = "data/embeddings/baseline",
+    fcg_dir: str = "data/fcg",
     phase4_checkpoint_dir: str = "data/checkpoints",
     phase4_embeddings_dir: str = "data/embeddings/finetuned",
     susi_cache_dir: str = "third_party/susi",
@@ -87,6 +88,10 @@ def main(
     phase4_cfg_path: str | None = None,
     phase4_weights_path: str | None = None,
     phase4_vocab_path: str | None = None,
+    phase5_entry_points_file: str | None = None,
+    phase5_no_isolated: bool = False,
+    phase5_include_boundary_edges: bool = True,
+    phase5_skip_existing: bool = True,
     do_download: bool = True,
     do_disassemble: bool = True,
     do_extract: bool = True,
@@ -95,12 +100,14 @@ def main(
     do_library_keys: bool = False,
     do_encode: bool = True,
     do_train: bool = False,
+    do_fcg: bool = False,
 ) -> None:
-    """Run the Phase 0–4 pipeline for every SHA in ``sha_file``.
+    """Run the Phase 0–5 pipeline for every SHA in ``sha_file``.
 
     Phase 4 knobs are prefixed with ``phase4_`` so the Phase 3 encode settings
     and the Phase 4 train settings can coexist in one unified debug entry.
-    ``do_train`` defaults to ``False`` to preserve the old Phase 0–3 behavior.
+    ``do_train`` and ``do_fcg`` default to ``False`` to preserve the old
+    Phase 0–3 behavior.
     Current Phase 4 defaults reflect the latest small-scale local sweep:
     ``batch_size=8, lr=3e-5, label_fraction=0.5``.
     """
@@ -203,6 +210,20 @@ def main(
             cfg_path=phase4_cfg_path,
             weights_path=phase4_weights_path,
             vocab_path=phase4_vocab_path,
+        )
+
+    if do_fcg:
+        print("\n[run_all] Phase 5: APK -> aligned FCG sidecars")
+        _load_phase_main("05_extract_fcg.py")(
+            sha_file=sha_file,
+            apks_dir=apks_dir,
+            methods_dir=methods_dir,
+            out_dir=fcg_dir,
+            entry_points_file=phase5_entry_points_file,
+            limit=limit,
+            no_isolated=phase5_no_isolated,
+            include_boundary_edges=phase5_include_boundary_edges,
+            skip_existing=phase5_skip_existing,
         )
 
     print("\n[run_all] all requested phases finished")
