@@ -10,10 +10,13 @@ import torch.nn.functional as F
 
 __all__ = [
     "abe_contrastive_loss",
+    "abce_contrastive_loss",
     "ab_contrastive_loss",
     "build_ab_positive_mask",
     "build_abe_positive_mask",
+    "build_abce_positive_mask",
     "count_b_positive_pairs",
+    "count_c_positive_pairs",
     "count_e_positive_pairs",
     "multi_positive_info_nce_loss",
 ]
@@ -89,6 +92,21 @@ def count_e_positive_pairs(override_keys: Sequence[Sequence[str]]) -> int:
     return len(pairs)
 
 
+def count_c_positive_pairs(library_keys: Sequence[Sequence[str]]) -> int:
+    """Count cross-method positive pairs contributed by signal C."""
+    groups: dict[str, set[int]] = defaultdict(set)
+    for i, keys in enumerate(library_keys):
+        for key in keys:
+            groups[str(key)].add(i)
+    pairs: set[tuple[int, int]] = set()
+    for idxs in groups.values():
+        idxs = sorted(idxs)
+        for i in range(len(idxs)):
+            for j in range(i + 1, len(idxs)):
+                pairs.add((idxs[i], idxs[j]))
+    return len(pairs)
+
+
 def build_abe_positive_mask(
     susi_labels: Sequence[str | None],
     override_keys: Sequence[Sequence[str]],
@@ -100,6 +118,36 @@ def build_abe_positive_mask(
     n = len(susi_labels)
     groups: dict[str, set[int]] = defaultdict(set)
     for i, keys in enumerate(override_keys):
+        for key in keys:
+            groups[str(key)].add(i)
+
+    for idxs in groups.values():
+        idxs = sorted(idxs)
+        if len(idxs) < 2:
+            continue
+        for i in idxs:
+            for j in idxs:
+                if i == j:
+                    continue
+                mask[i, j] = True
+                mask[i, j + n] = True
+                mask[i + n, j] = True
+                mask[i + n, j + n] = True
+    return mask
+
+
+def build_abce_positive_mask(
+    susi_labels: Sequence[str | None],
+    override_keys: Sequence[Sequence[str]],
+    library_keys: Sequence[Sequence[str]],
+    *,
+    device: torch.device | None = None,
+) -> torch.Tensor:
+    """Build the 2N×2N positive mask for A+B+C+E."""
+    mask = build_abe_positive_mask(susi_labels, override_keys, device=device)
+    n = len(susi_labels)
+    groups: dict[str, set[int]] = defaultdict(set)
+    for i, keys in enumerate(library_keys):
         for key in keys:
             groups[str(key)].add(i)
 
@@ -179,4 +227,28 @@ def abe_contrastive_loss(
         )
     z = torch.cat([F.normalize(view1, dim=-1), F.normalize(view2, dim=-1)], dim=0)
     positive_mask = build_abe_positive_mask(susi_labels, override_keys, device=z.device)
+    return multi_positive_info_nce_loss(z, positive_mask, temperature=temperature)
+
+
+def abce_contrastive_loss(
+    view1: torch.Tensor,
+    view2: torch.Tensor,
+    susi_labels: Sequence[str | None],
+    override_keys: Sequence[Sequence[str]],
+    library_keys: Sequence[Sequence[str]],
+    *,
+    temperature: float = 0.07,
+) -> torch.Tensor:
+    """Phase 4 A+B+C+E loss over two encoder dropout views."""
+    if view1.shape != view2.shape:
+        raise ValueError(
+            f"view shapes must match, got {tuple(view1.shape)} vs {tuple(view2.shape)}"
+        )
+    z = torch.cat([F.normalize(view1, dim=-1), F.normalize(view2, dim=-1)], dim=0)
+    positive_mask = build_abce_positive_mask(
+        susi_labels,
+        override_keys,
+        library_keys,
+        device=z.device,
+    )
     return multi_positive_info_nce_loss(z, positive_mask, temperature=temperature)

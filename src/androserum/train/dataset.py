@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from collections import Counter, defaultdict
 from collections.abc import Callable, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 import math
 import random
@@ -98,7 +98,8 @@ class MethodTextSample:
     full_id: str
     text: str
     susi_label: str | None
-    override_keys: list[str]
+    override_keys: list[str] = field(default_factory=list)
+    library_keys: list[str] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -110,6 +111,7 @@ class ContrastiveBatch:
     mask: torch.Tensor
     susi_labels: list[str | None]
     override_keys: list[list[str]]
+    library_keys: list[list[str]]
     apk_shas: list[str]
     full_ids: list[str]
 
@@ -163,6 +165,7 @@ def build_contrastive_collate_fn(tokenizer, cfg) -> Callable[[list[MethodTextSam
             mask=mask,
             susi_labels=[row.susi_label for row in batch],
             override_keys=[row.override_keys for row in batch],
+            library_keys=[row.library_keys for row in batch],
             apk_shas=[row.apk_sha for row in batch],
             full_ids=[row.full_id for row in batch],
         )
@@ -209,6 +212,15 @@ class ContrastiveMethodDataset(Dataset[MethodTextSample]):
             for key, indices in self.override_to_indices.items()
             if len(indices) >= 2
         }
+        self.library_to_indices: dict[str, list[int]] = defaultdict(list)
+        for idx, sample in enumerate(self.samples):
+            for key in sample.library_keys:
+                self.library_to_indices[key].append(idx)
+        self.usable_library_to_indices = {
+            key: indices
+            for key, indices in self.library_to_indices.items()
+            if len(indices) >= 2
+        }
 
     def __len__(self) -> int:
         return len(self.samples)
@@ -230,6 +242,8 @@ class ContrastiveMethodDataset(Dataset[MethodTextSample]):
             "susi_labels_usable": len(self.usable_label_to_indices),
             "override_keys_total": len(self.override_to_indices),
             "override_keys_usable": len(self.usable_override_to_indices),
+            "library_keys_total": len(self.library_to_indices),
+            "library_keys_usable": len(self.usable_library_to_indices),
             "skipped_filtered": self.skipped_filtered,
             "skipped_unlabeled": self.skipped_unlabeled,
         }
@@ -244,6 +258,7 @@ class ContrastiveMethodDataset(Dataset[MethodTextSample]):
         max_unlabeled_per_apk: int = 256,
         unlabeled_keep_ratio: float = 0.05,
         overrides_dir: str | Path | None = "data/overrides",
+        libraries_dir: str | Path | None = "data/library_keys",
         seed: int = 13,
         show_progress: bool = True,
     ) -> "ContrastiveMethodDataset":
@@ -261,6 +276,10 @@ class ContrastiveMethodDataset(Dataset[MethodTextSample]):
             overrides_root = None
         else:
             overrides_root = Path(overrides_dir)
+        if libraries_dir is None:
+            libraries_root = None
+        else:
+            libraries_root = Path(libraries_dir)
         iterator = shas
         if show_progress:
             iterator = tqdm(shas, desc="phase4_dataset", unit="apk")
@@ -278,6 +297,12 @@ class ContrastiveMethodDataset(Dataset[MethodTextSample]):
                 from androserum.data.override_index import read_override_parquet
 
                 override_map = read_override_parquet(overrides_root / f"{sha}.parquet")
+            if libraries_root is None:
+                library_map: dict[str, list[str]] = {}
+            else:
+                from androserum.data.library_index import read_library_parquet
+
+                library_map = read_library_parquet(libraries_root / f"{sha}.parquet")
 
             filtered_mask = df["filtered"].fillna(False).astype(bool)
             skipped_filtered += int(filtered_mask.sum())
@@ -330,6 +355,7 @@ class ContrastiveMethodDataset(Dataset[MethodTextSample]):
                         text="\n".join(str(x) for x in instructions),
                         susi_label=normalize_susi_label(row.phase4_label),
                         override_keys=list(override_map.get(str(row.full_id), [])),
+                        library_keys=list(library_map.get(str(row.full_id), [])),
                     )
                 )
 

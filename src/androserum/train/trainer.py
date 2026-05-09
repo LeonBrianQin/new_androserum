@@ -24,8 +24,10 @@ from androserum.train.dataset import (
 )
 from androserum.train.losses import (
     ab_contrastive_loss,
+    abce_contrastive_loss,
     abe_contrastive_loss,
     count_b_positive_pairs,
+    count_c_positive_pairs,
     count_e_positive_pairs,
 )
 from androserum.train.samplers import PositiveGroupBatchSampler, SusiGroupBatchSampler
@@ -61,6 +63,8 @@ class ContrastiveTrainConfig:
     max_unlabeled_per_apk: int = 256
     unlabeled_keep_ratio: float = 0.05
     overrides_dir: str | None = "data/overrides"
+    libraries_dir: str | None = "data/library_keys"
+    use_signal_c: bool = False
     use_signal_e: bool = False
     num_workers: int = 0
     limit: int = 0
@@ -181,6 +185,7 @@ def train_contrastive_ab(cfg: ContrastiveTrainConfig) -> dict[str, Any]:
         max_unlabeled_per_apk=cfg.max_unlabeled_per_apk,
         unlabeled_keep_ratio=cfg.unlabeled_keep_ratio,
         overrides_dir=cfg.overrides_dir,
+        libraries_dir=cfg.libraries_dir,
         seed=cfg.seed,
         show_progress=True,
     )
@@ -204,12 +209,13 @@ def train_contrastive_ab(cfg: ContrastiveTrainConfig) -> dict[str, Any]:
     print(f"[phase4] device: {dev}")
     print(f"[phase4] trainable params: {model.trainable_parameter_count():,}")
 
-    if cfg.use_signal_e:
+    if cfg.use_signal_e or cfg.use_signal_c:
         batch_sampler = PositiveGroupBatchSampler(
             all_indices=dataset.all_indices,
             group_maps=[
                 dataset.usable_label_to_indices,
-                dataset.usable_override_to_indices,
+                dataset.usable_library_to_indices if cfg.use_signal_c else {},
+                dataset.usable_override_to_indices if cfg.use_signal_e else {},
             ],
             batch_size=cfg.batch_size,
             group_size=cfg.label_group_size,
@@ -263,7 +269,16 @@ def train_contrastive_ab(cfg: ContrastiveTrainConfig) -> dict[str, Any]:
             optimizer.zero_grad(set_to_none=True)
             _, proj1 = model(input_ids, seg_ids, mask)
             _, proj2 = model(input_ids, seg_ids, mask)
-            if cfg.use_signal_e:
+            if cfg.use_signal_c:
+                loss = abce_contrastive_loss(
+                    proj1,
+                    proj2,
+                    batch.susi_labels,
+                    batch.override_keys if cfg.use_signal_e else [[] for _ in batch.susi_labels],
+                    batch.library_keys,
+                    temperature=cfg.temperature,
+                )
+            elif cfg.use_signal_e:
                 loss = abe_contrastive_loss(
                     proj1,
                     proj2,
@@ -291,6 +306,7 @@ def train_contrastive_ab(cfg: ContrastiveTrainConfig) -> dict[str, Any]:
             if step == 1 or step % cfg.log_every == 0 or step == len(loader):
                 labeled = sum(label is not None for label in batch.susi_labels)
                 b_pairs = count_b_positive_pairs(batch.susi_labels)
+                c_pairs = count_c_positive_pairs(batch.library_keys) if cfg.use_signal_c else 0
                 e_pairs = count_e_positive_pairs(batch.override_keys) if cfg.use_signal_e else 0
                 print(
                     "[phase4] "
@@ -299,6 +315,7 @@ def train_contrastive_ab(cfg: ContrastiveTrainConfig) -> dict[str, Any]:
                     f"loss={batch_loss:.4f} "
                     f"labeled_in_batch={labeled}/{len(batch.susi_labels)} "
                     f"b_pairs={b_pairs} "
+                    f"c_pairs={c_pairs} "
                     f"e_pairs={e_pairs}"
                 )
 

@@ -51,6 +51,7 @@ def main(
     processed_dir: str = "data/processed",
     methods_dir: str = "data/methods",
     overrides_dir: str = "data/overrides",
+    library_keys_dir: str = "data/library_keys",
     embeddings_dir: str = "data/embeddings/baseline",
     phase4_checkpoint_dir: str = "data/checkpoints",
     phase4_embeddings_dir: str = "data/embeddings/finetuned",
@@ -80,6 +81,8 @@ def main(
     phase4_grad_clip_norm: float = 1.0,
     phase4_export_after_train: bool = False,
     phase4_overrides_dir: str | None = "data/overrides",
+    phase4_libraries_dir: str | None = "data/library_keys",
+    phase4_use_signal_c: bool = False,
     phase4_use_signal_e: bool = False,
     phase4_cfg_path: str | None = None,
     phase4_weights_path: str | None = None,
@@ -89,6 +92,7 @@ def main(
     do_extract: bool = True,
     do_susi: bool = True,
     do_overrides: bool = False,
+    do_library_keys: bool = False,
     do_encode: bool = True,
     do_train: bool = False,
 ) -> None:
@@ -145,6 +149,15 @@ def main(
             limit=limit,
         )
 
+    if do_library_keys:
+        print("\n[run_all] Phase 2d: cross-APK exact full_id library sidecar parquet")
+        _load_phase_main("02d_extract_library_keys.py")(
+            sha_file=sha_file,
+            methods_dir=methods_dir,
+            out_dir=library_keys_dir,
+            limit=limit,
+        )
+
     if do_encode:
         print("\n[run_all] Phase 3: frozen-DexBERT encode -> embeddings/<SHA>.npz")
         _load_phase_main("03_encode_methods.py")(
@@ -178,6 +191,8 @@ def main(
             max_unlabeled_per_apk=phase4_max_unlabeled_per_apk,
             unlabeled_keep_ratio=phase4_unlabeled_keep_ratio,
             overrides_dir=phase4_overrides_dir,
+            libraries_dir=phase4_libraries_dir,
+            use_signal_c=phase4_use_signal_c,
             use_signal_e=phase4_use_signal_e,
             num_workers=phase4_num_workers,
             limit=phase4_limit if phase4_limit > 0 else limit,

@@ -129,6 +129,7 @@ class PositiveGroupBatchSampler(Sampler[list[int]]):
     Example sources:
       * SuSi label groups (signal B)
       * override-key groups (signal E)
+      * library-key groups (signal C)
     """
 
     def __init__(
