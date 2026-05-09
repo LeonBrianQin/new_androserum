@@ -108,7 +108,10 @@ def method_to_full_id(method: object) -> str:
     """Normalize an Androguard method-like object to our canonical ``full_id``."""
     class_name = str(method.get_class_name()).strip()
     method_name = str(method.get_name()).strip()
-    descriptor = str(method.get_descriptor()).strip()
+    # Androguard may pretty-print descriptors with spaces after commas /
+    # between adjacent reference types. Our Phase 2 ``full_id`` strings are
+    # space-free Dalvik descriptors, so we collapse all ASCII spaces here.
+    descriptor = str(method.get_descriptor()).strip().replace(" ", "")
     return make_full_id(class_name, _method_sig(method_name, descriptor))
 
 

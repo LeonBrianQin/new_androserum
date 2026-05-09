@@ -42,6 +42,15 @@ def test_method_to_full_id_matches_phase2_schema():
     assert method_to_full_id(m) == "Lcom/example/Foo;->bar(I)V"
 
 
+def test_method_to_full_id_strips_androguard_descriptor_spaces():
+    m = _FakeMethod(
+        "Lcom/example/Foo;",
+        "bar",
+        "(Ljava/lang/String; Ljava/lang/Object; I)V",
+    )
+    assert method_to_full_id(m) == "Lcom/example/Foo;->bar(Ljava/lang/String;Ljava/lang/Object;I)V"
+
+
 def test_align_call_graph_to_method_rows_keeps_method_row_order():
     method_a = _FakeMethod("Lcom/example/A;", "alpha", "()V")
     method_b = _FakeMethod("Lcom/example/B;", "beta", "()V")
