@@ -1,0 +1,32 @@
+sha_file: configs/sha_dev_200.txt
+fcg_dir: data/fcg
+embeddings_dir: data/embeddings/finetuned/p4_dev200_abe_run1
+checkpoint_dir: data/checkpoints/gnn_bgrl_relay
+gnn_embeddings_dir: data/gnn_embeddings/gnn_bgrl_relay
+device: cuda
+
+# Graph construction
+graph_mode: relay
+external_prior_mode: none
+add_reverse_edges: true
+
+# GraphSAGE + BGRL
+hidden_dim: 256
+output_dim: 256
+predictor_hidden_dim: 512
+encoder_dropout: 0.1
+edge_drop_prob: 0.3
+feature_mask_prob: 0.2
+lr: 0.001
+weight_decay: 0.00001
+epochs: 20
+ema_decay: 0.99
+
+# Training / export
+limit: 0
+seed: 13
+log_every: 10
+exclude_filtered_from_loss: true
+loss_scope: internal
+export_after_train: true
+export_encoder: target

@@ -52,13 +52,10 @@ dev = [
     "ipykernel",
 ]
 # Phase 6 dependencies — install separately after pinning the torch version.
-# Example:
-#   pip install torch-geometric torch-scatter torch-sparse \
-#       -f https://data.pyg.org/whl/torch-${TORCH}.html
+# Prefer:
+#   bash scripts/setup_gnn_env.sh
 gnn = [
-    # "torch-geometric>=2.5",
-    # "torch-scatter",
-    # "torch-sparse",
+    "torch-geometric>=2.5",
 ]
 
 [project.urls]

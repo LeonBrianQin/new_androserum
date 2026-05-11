@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""End-to-end pipeline runner: Phase 0 → 1 → 2 → 2b → 3 → 4 → 5.
+"""End-to-end pipeline runner: Phase 0 → 1 → 2 → 2b → 3 → 4 → 5 → 6.
 
 Calls each phase's ``main()`` in order. Every phase has its own
 ``skip_existing`` so re-runs are cheap; you can also start mid-pipeline by
@@ -92,6 +92,7 @@ def main(
     phase5_no_isolated: bool = False,
     phase5_include_boundary_edges: bool = True,
     phase5_skip_existing: bool = True,
+    phase6_cfg_path: str = "configs/train_gnn_bgrl.yaml",
     do_download: bool = True,
     do_disassemble: bool = True,
     do_extract: bool = True,
@@ -101,13 +102,14 @@ def main(
     do_encode: bool = True,
     do_train: bool = False,
     do_fcg: bool = False,
+    do_gnn: bool = False,
 ) -> None:
-    """Run the Phase 0–5 pipeline for every SHA in ``sha_file``.
+    """Run the Phase 0–6 pipeline for every SHA in ``sha_file``.
 
     Phase 4 knobs are prefixed with ``phase4_`` so the Phase 3 encode settings
     and the Phase 4 train settings can coexist in one unified debug entry.
-    ``do_train`` and ``do_fcg`` default to ``False`` to preserve the old
-    Phase 0–3 behavior.
+    ``do_train``, ``do_fcg`` and ``do_gnn`` default to ``False`` to preserve
+    the old Phase 0–3 behavior.
     Current Phase 4 defaults reflect the latest small-scale local sweep:
     ``batch_size=8, lr=3e-5, label_fraction=0.5``.
     """
@@ -224,6 +226,12 @@ def main(
             no_isolated=phase5_no_isolated,
             include_boundary_edges=phase5_include_boundary_edges,
             skip_existing=phase5_skip_existing,
+        )
+
+    if do_gnn:
+        print("\n[run_all] Phase 6: GraphSAGE+BGRL over Phase 5 graphs")
+        _load_phase_main("06_train_gnn.py")(
+            cfg_path=phase6_cfg_path,
         )
 
     print("\n[run_all] all requested phases finished")
