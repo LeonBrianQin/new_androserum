@@ -88,7 +88,16 @@ def _run_one(cfg: BatchAnchorDiscoveryConfig, sha: str) -> dict[str, Any]:
         "hard_anchor_full_ids": [a.full_id for a in result.anchors],
         "context_anchor_full_ids": [a.full_id for a in result.context_candidates[:100]],
     }
-    return out
+    payload = {
+        "config": asdict(cfg),
+        "result": {
+            "apk_sha": result.apk_sha,
+            "stats": result.stats,
+            "anchors": [asdict(a) for a in result.anchors],
+            "context_candidates": [asdict(a) for a in result.context_candidates],
+        },
+    }
+    return out, payload
 
 
 def main(**kwargs) -> None:
@@ -107,10 +116,14 @@ def main(**kwargs) -> None:
         futs = {ex.submit(_run_one, cfg, sha): sha for sha in shas}
         for fut in as_completed(futs):
             sha = futs[fut]
-            res = fut.result()
+            res, payload = fut.result()
             results.append(res)
-            (per_apk_dir / f"{sha}.json").write_text(
+            (per_apk_dir / f"{sha}.summary.json").write_text(
                 json.dumps(res, ensure_ascii=False, indent=2),
+                encoding="utf-8",
+            )
+            (out_dir / f"{sha}.anchors.json").write_text(
+                json.dumps(payload, ensure_ascii=False, indent=2),
                 encoding="utf-8",
             )
             print(f"[batch-anchor] done {sha}")
@@ -193,4 +206,3 @@ def main(**kwargs) -> None:
 
 if __name__ == "__main__":
     fire.Fire(main)
-
