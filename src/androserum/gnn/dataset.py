@@ -176,6 +176,7 @@ class FcgGraphDataset:
         graph_mode: str = "internal_only",
         external_prior_mode: str = "none",
         add_reverse_edges: bool = True,
+        family_to_id: dict[str, int] | None = None,
     ) -> "FcgGraphDataset":
         if graph_mode not in {"internal_only", "relay"}:
             raise ValueError(f"unsupported graph_mode: {graph_mode}")
@@ -221,8 +222,8 @@ class FcgGraphDataset:
                 )
             )
 
-        family_to_id: dict[str, int] = {}
-        if graph_mode == "relay" and external_prior_mode == "package":
+        resolved_family_to_id: dict[str, int] = dict(family_to_id or {})
+        if graph_mode == "relay" and external_prior_mode == "package" and not resolved_family_to_id:
             families: set[str] = set()
             for entry in entries:
                 bdf = _read_parquet(entry.boundary_edges_path)
@@ -234,7 +235,7 @@ class FcgGraphDataset:
                 ):
                     if other_external:
                         families.add(external_family_key(full_id))
-            family_to_id = {fam: idx for idx, fam in enumerate(sorted(families))}
+            resolved_family_to_id = {fam: idx for idx, fam in enumerate(sorted(families))}
 
         ds = cls(
             entries=entries,
@@ -242,7 +243,7 @@ class FcgGraphDataset:
             graph_mode=graph_mode,
             external_prior_mode=external_prior_mode,
             add_reverse_edges=add_reverse_edges,
-            family_to_id=family_to_id,
+            family_to_id=resolved_family_to_id,
         )
         ds._missing_shas = missing
         ds._zero_method_shas = zero_method_shas

@@ -1,0 +1,73 @@
+{
+  "config": {
+    "metadata_csv": "metadata.csv",
+    "out_csv": "configs/lamda_binary_eval_240_candidates.csv",
+    "out_summary_json": "configs/lamda_binary_eval_240_candidates.summary.json",
+    "seed": 13,
+    "benign_primary": 100,
+    "malware_primary": 100,
+    "benign_reserve": 20,
+    "malware_reserve": 20,
+    "year_min": 2018,
+    "year_max": 2023,
+    "malware_family_cap": 5,
+    "malware_family_cap_large": 8
+  },
+  "n_total": 240,
+  "label_counts": {
+    "0.0": 120,
+    "1.0": 120
+  },
+  "role_counts": {
+    "primary": 200,
+    "reserve": 40
+  },
+  "year_counts": {
+    "2018": 40,
+    "2019": 40,
+    "2020": 40,
+    "2021": 40,
+    "2022": 40,
+    "2023": 40
+  },
+  "benign_year_counts": {
+    "2018": 20,
+    "2019": 20,
+    "2020": 20,
+    "2021": 20,
+    "2022": 20,
+    "2023": 20
+  },
+  "malware_year_counts": {
+    "2018": 20,
+    "2019": 20,
+    "2020": 20,
+    "2021": 20,
+    "2022": 20,
+    "2023": 20
+  },
+  "top_malware_families": {
+    "singleton:86a66bc7e4f1cf307a11c916f7ffacde5eb04eecaba3bbfb70e2a69a6b5a56d7": 1,
+    "singleton:78b2541d906234e4717c4fa1f852f23f65e95b9c5fa9157c13ba4abd1405213c": 1,
+    "singleton:14756d1ba3d43060fb1e6e1ddc89c44212d43ee32e540c5988f22d8fe3954ac6": 1,
+    "leadbolt": 1,
+    "singleton:0c233205c1fd62da16c9f8db1e3db2526950256bcb9bc0d9c66a4c6445eb61c5": 1,
+    "singleton:45791745cd87ac72817f83f04fca319b9d7863b06cdcd14278919a1b7aad23ed": 1,
+    "singleton:2dcc0d8a293ef98dd4ff5fb5ce634f070fc4bc53bd8ac116535d7beba8df4451": 1,
+    "spybubble": 1,
+    "singleton:2918db00507d7ebbe5b4b7471487fe0d2dbfe448ed0c00922e73352b05e12acb": 1,
+    "singleton:8157bb8af57b7327ce537da6524c0ed387de706b00b2290af32ebef554de8944": 1,
+    "singleton:90bed748f70205c1784d20120fb53bf4d9d702413c8f167d05066cc1b0bf49f8": 1,
+    "singleton:3b2f945517058d4cc3e46d8311545842aefa644fb8a2d9f516a05643745a9511": 1,
+    "singleton:26b68bb987e118f8290b47f77a9441f2b48f6e0c46d2bf9ac18b3a3cbe93691d": 1,
+    "singleton:3e6e3829530f10d832fbfa824a32ac8633928b88f271c6d935917f3678716185": 1,
+    "singleton:042a71124ea7301f5c25046cf9aaa79dad1686da5b2a5f08ecc240c99a2ad70a": 1,
+    "singleton:aa8e25700a499e3f99945b2d47451eca28a3caa7defc59c299e5aeb8d1da371e": 1,
+    "singleton:2a20a88b25be354bd6f929a8011c45e6f1c0bc89aba34125fa16243e3a32bdf8": 1,
+    "sakezon": 1,
+    "singleton:1a96e6ac14ee384c0496957b0d50cba60598c72dbccbe66aa5fd963aad4ac738": 1,
+    "singleton:058d8a47f7735ea5b3b4bef63aabdd799fd6c1b78b6012ce063f6e87e977edb9": 1
+  },
+  "median_vt_detection_malware": 6.0,
+  "median_vt_detection_benign": 0.0
+}

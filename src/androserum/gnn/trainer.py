@@ -167,6 +167,7 @@ def _save_checkpoint(
     epoch: int,
     mean_loss: float,
     dataset_stats: dict[str, Any],
+    family_to_id: dict[str, int] | None = None,
 ) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     payload = {
@@ -174,6 +175,7 @@ def _save_checkpoint(
         "mean_loss": mean_loss,
         "train_config": asdict(cfg),
         "dataset_stats": dataset_stats,
+        "family_to_id": dict(family_to_id or {}),
         "model_state_dict": model.state_dict(),
         "optimizer_state_dict": optimizer.state_dict(),
     }
@@ -304,6 +306,7 @@ def train_bgrl_graphsage(cfg: GnnTrainConfig) -> dict[str, Any]:
             epoch=epoch,
             mean_loss=mean_loss,
             dataset_stats=dataset_stats,
+            family_to_id=dataset.family_to_id,
         )
         if mean_loss < best_loss:
             best_loss = mean_loss
@@ -315,6 +318,7 @@ def train_bgrl_graphsage(cfg: GnnTrainConfig) -> dict[str, Any]:
                 epoch=epoch,
                 mean_loss=mean_loss,
                 dataset_stats=dataset_stats,
+                family_to_id=dataset.family_to_id,
             )
 
         summary = {

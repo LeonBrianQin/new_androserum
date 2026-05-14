@@ -27,7 +27,10 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 # We deliberately do not accept ``;`` ``[`` ``<`` ``>`` ``:`` ``(`` ``)``
 # (those are reserved as descriptor / signature separators). Whitespace is
 # also rejected to keep ``full_id`` parseable later.
-_CLASS_NAME_RE = re.compile(r"^L[A-Za-z0-9_$\-/]+;$")
+# Accept any non-whitespace Unicode identifier chars inside a Dalvik class
+# descriptor, while still rejecting descriptor-reserved separators that would
+# break later ``full_id`` parsing.
+_CLASS_NAME_RE = re.compile(r"^L[^;\[<>:()\s]+;$", re.UNICODE)
 
 
 def make_full_id(class_name: str, method_sig: str) -> str:

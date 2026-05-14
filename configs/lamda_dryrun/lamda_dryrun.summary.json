@@ -1,0 +1,125 @@
+{
+  "config": {
+    "train_csv": "configs/lamda_train_160.csv",
+    "val_csv": "configs/lamda_val_40.csv",
+    "test_csv": "configs/lamda_test_40.csv",
+    "out_dir": "configs/lamda_dryrun",
+    "train_n_per_label": 3,
+    "val_n_per_label": 2,
+    "test_n_per_label": 2,
+    "seed": 13
+  },
+  "train": {
+    "n": 6,
+    "rows": [
+      {
+        "sha256": "045FAFF01BCC6E24472EC2474CF4E12864DFBFDF789E31CF71A1D4745A3FF4BB",
+        "label": 0.0,
+        "family": "benign",
+        "year": 2019,
+        "role": "primary"
+      },
+      {
+        "sha256": "3F971362D21B514194BB31FC05822C365DD3101A4EAAACDE58726D460EDC6756",
+        "label": 1.0,
+        "family": "singleton:3f971362d21b514194bb31fc05822c365dd3101a4eaaacde58726d460edc6756",
+        "year": 2022,
+        "role": "primary"
+      },
+      {
+        "sha256": "2A20A88B25BE354BD6F929A8011C45E6F1C0BC89ABA34125FA16243E3A32BDF8",
+        "label": 1.0,
+        "family": "singleton:2a20a88b25be354bd6f929a8011c45e6f1c0bc89aba34125fa16243e3a32bdf8",
+        "year": 2021,
+        "role": "primary"
+      },
+      {
+        "sha256": "8157BB8AF57B7327CE537DA6524C0ED387DE706B00B2290AF32EBEF554DE8944",
+        "label": 1.0,
+        "family": "singleton:8157bb8af57b7327ce537da6524c0ed387de706b00b2290af32ebef554de8944",
+        "year": 2018,
+        "role": "primary"
+      },
+      {
+        "sha256": "20538D116628571B324A3E56842CF613EF6029E9ECA03F6013AA36969B0A1FD9",
+        "label": 0.0,
+        "family": "benign",
+        "year": 2023,
+        "role": "primary"
+      },
+      {
+        "sha256": "A512B8EE1A767F2754FCB4053BCA9EBC819AE155D1677A58F41F506DE4A54F6E",
+        "label": 0.0,
+        "family": "benign",
+        "year": 2019,
+        "role": "primary"
+      }
+    ]
+  },
+  "val": {
+    "n": 4,
+    "rows": [
+      {
+        "sha256": "14756D1BA3D43060FB1E6E1DDC89C44212D43EE32E540C5988F22D8FE3954AC6",
+        "label": 1.0,
+        "family": "singleton:14756d1ba3d43060fb1e6e1ddc89c44212d43ee32e540c5988f22d8fe3954ac6",
+        "year": 2018,
+        "role": "primary"
+      },
+      {
+        "sha256": "500EFB7DD42F1DA17087F570C9B69F2C4293F12FEFE8247D65084B5EA25E96BF",
+        "label": 1.0,
+        "family": "singleton:500efb7dd42f1da17087f570c9b69f2c4293f12fefe8247d65084b5ea25e96bf",
+        "year": 2021,
+        "role": "primary"
+      },
+      {
+        "sha256": "102B83917E96C65438108D58F2E974B5D5629A509325CA73A217D220ABEB5C7D",
+        "label": 0.0,
+        "family": "benign",
+        "year": 2022,
+        "role": "primary"
+      },
+      {
+        "sha256": "18D30D7C2CEA741851926B17EFF2BCABBAE13BF00DC82279CA36E2900D41AD47",
+        "label": 0.0,
+        "family": "benign",
+        "year": 2018,
+        "role": "primary"
+      }
+    ]
+  },
+  "test": {
+    "n": 4,
+    "rows": [
+      {
+        "sha256": "AF9871CCED8F9707F8EA15F54CAE42461BF66CDB29F2E66D6E56BD259ECA8FB9",
+        "label": 1.0,
+        "family": "singleton:af9871cced8f9707f8ea15f54cae42461bf66cdb29f2e66d6e56bd259eca8fb9",
+        "year": 2021,
+        "role": "reserve"
+      },
+      {
+        "sha256": "1A483CF632748E0CB44D0A1C4C4A6F990F7505B614C9C5DA9D0D3DB29029557E",
+        "label": 0.0,
+        "family": "benign",
+        "year": 2020,
+        "role": "reserve"
+      },
+      {
+        "sha256": "51C9A5789E1C2B2921CBE55208880E1CB3B6CE033C432464769F1DC8E207B933",
+        "label": 1.0,
+        "family": "singleton:51c9a5789e1c2b2921cbe55208880e1cb3b6ce033c432464769f1dc8e207b933",
+        "year": 2022,
+        "role": "reserve"
+      },
+      {
+        "sha256": "43A201CAE93195A6F51BD5B6068CB88315DE780CFEFD47911ECC44C139BF82FE",
+        "label": 0.0,
+        "family": "benign",
+        "year": 2021,
+        "role": "reserve"
+      }
+    ]
+  }
+}

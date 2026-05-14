@@ -174,3 +174,20 @@ def test_relay_package_prior_builds_family_vocab(tmp_path: Path):
     assert sample.num_nodes == 4
     # One external relay node gets a family id; the internal-unaligned relay does not.
     assert sorted(sample.family_ids.tolist()) == [-1, -1, -1, 0]
+
+
+def test_relay_package_prior_respects_supplied_family_vocab(tmp_path: Path):
+    sha = "D" * 64
+    fcg_dir, emb_dir, sha_file = _write_graph_bundle(tmp_path, sha)
+    ds = FcgGraphDataset.from_dirs(
+        fcg_dir=fcg_dir,
+        embeddings_dir=emb_dir,
+        sha_file=str(sha_file),
+        graph_mode="relay",
+        external_prior_mode="package",
+        add_reverse_edges=False,
+        family_to_id={"java": 7, "android": 9},
+    )
+    sample = ds.load(0)
+    assert ds.family_to_id == {"java": 7, "android": 9}
+    assert sorted(sample.family_ids.tolist()) == [-1, -1, -1, 7]

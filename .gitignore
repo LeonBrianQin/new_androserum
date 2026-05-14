@@ -6,6 +6,8 @@
 # or any future src/.../assets/ subpackage.
 /assets/
 /data/
+/data_lamda_eval/
+/data_lamda_eval_dryrun/
 
 # File-level safety net (in case a path slips through)
 *.pt
@@ -15,6 +17,11 @@
 *.npy
 *.npz
 *.gpickle
+*.txt
+/metadata.csv
+/dataset_D.csv
+/dataset_D_dot.csv
+/AndroSerum_final_edition.pdf
 
 # ============================================================
 # Python build / cache
